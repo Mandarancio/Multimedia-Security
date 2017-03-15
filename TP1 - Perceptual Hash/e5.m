@@ -23,3 +23,6 @@ for i=1:numel(files)
 endfor
 
 hist(errors,3,1);
+xlabel('P_b');
+ylabel('Normed Occurency');
+title('IntraClass P_b');

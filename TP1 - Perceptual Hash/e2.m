@@ -34,21 +34,50 @@ graphics_toolkit ('gnuplot')
 
 I = imread("peppers.png");
 I = rgb2gray(I);#r/3+g/3+b/3;
+
+dI = im2double(I);
+implot(dI)
+figure()
+u2dError = MSE(I,dI)
+
 i=AWGNI(I);
+psnr_GN = PSNR(i,I)
 implot(i);
+title(strcat(strcat('Gaussian Noise, PSNR: ',num2str(psnr_GN,'%5.2f')),' db'))
+print('peppers_gn.png');
 i= SPNI(I);
 figure()
 implot(i)
+
 psnr_SP = PSNR(i,I)
 
+title(strcat(strcat('Salt & Pepper Noise, PSNR: ',num2str(psnr_SP,'%5.2f')),' db'))
+print('peppers_spn.png');
+
+
 for psnr=[10,20,30,40] 
-  s = sqrt(RPSNR(psnr))
+  s = sqrt(RPSNR(psnr));
   i = AWGNI(I,s);
   mse = MSE(I,i)
   psnr = PSNR(I,i)
+  t = strcat(num2str(psnr,'%5.0f'),'.png');
+  
   figure()
   implot(i);
+  title(strcat(strcat('PSNR: ',num2str(psnr,'%5.0f')),' db'));
+  print(strcat('imgs/peppers_gn_',t));
   figure()
   colorHist(i,'black')
+  title(strcat(strcat('Luminosity histogram, PSNR: ',num2str(psnr,'%5.0f')),' db'))
+  xlabel('luminosity')
+  ylabel('occurency')
+  print(strcat('imgs/histo_gn_',t));
 endfor
+figure();
 
+i= SPNI(I,0.0002,0.0002);
+psnr_SP = PSNR(i,I)
+implot(i)
+title(strcat(strcat('Salt & Pepper Noise, PSNR: ',num2str(psnr_SP,'%5.2f')),' db'))
+print('peppers_spn_40.png');
+#print('peppers_spn.png');

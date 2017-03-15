@@ -23,5 +23,5 @@
 ## Created: 2017-03-02
 
 function  implot (image)
-  imshow(imrotate(image,180))
+  imshow(image)
 endfunction
