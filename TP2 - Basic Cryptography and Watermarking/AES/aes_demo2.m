@@ -54,7 +54,11 @@ figure;imshow(im_c, []);title('encryption')
 %--------------------------------------------------------------------------
 %	MODEL BLOCK LOSS HERE
 %
-%
+
+%im_c(randi(1,length(im_c)))=0;
+%gauss noise
+im_c = uint8(double(im_c)+normrnd(0,2,size(im_c)));
+
 %
 %--------------------------------------------------------------------------
 
