@@ -353,7 +353,7 @@ plt.show()
 
 
 
-# In[23]:
+# In[29]:
 
 # Pt 3 Exercise 2
 
@@ -397,11 +397,15 @@ def stat(m0,m1,s):
     plt.xlim([-5,5])
     plt.savefig(f"ms_tp3_e5_plt{m1}.png",bbox_inches='tight')
 
+
 def roc(m0,m1,s,ls='-',alpha=1.0):
     pf = np.linspace(0,1,100)
     pm = norm.cdf(-norm.ppf(pf,m1,s),m0,s)
-    plt.plot(pf,pm,label=f'$\mu_1={m1}$',linestyle=ls,alpha=alpha) 
-    
+    τ = (m1+m0)/2
+    τpm = norm.cdf(-τ,m0,s)
+    τpf = norm.cdf(τ,m1,s)
+    plt.plot(pf,pm,ls,label=f"$\mu_1={m1}$",alpha=alpha )
+
 '''
 H0 = Z
 H1 = mu1 + Z
@@ -418,11 +422,25 @@ stat(0,2,1)
 
 
 plt.figure()
-roc(0,0,1)
-roc(0,0.5,1,':',0.5)
-roc(0,1,1)
-roc(0,1.5,1,':',0.5)
-roc(0,2,1)
+
+mus = [0,0.5,1,1.5,2]
+pfs = []
+pms = []
+
+c = 0 
+for mu in mus:
+    τ = (mu+0)/2
+    τpm = norm.cdf(-τ,0,1)
+    τpf = norm.cdf(τ,mu,1)
+    print(f"pf({mu:.1f})={τpf:.3f}, pm({mu:.1f})={τpm:.3f}, pd({mu:.1f})={1-τpm:.3f}")
+    pfs.append(τpf)
+    pms.append(τpm)
+    if c%2 == 0:
+        roc(0,mu,1)
+    else:
+        roc(0,mu,1,":",0.5)
+    c += 1
+plt.plot(pfs,pms,"s:",alpha=0.5,label=r"$\tau$")
 plt.ylabel('$p_m$')
 plt.xlabel('$p_f$')
 plt.xlim([0,1])
@@ -436,7 +454,7 @@ plt.savefig("ms_tp3_e5_RCO.png",bbox_inches='tight')
 plt.show()
 
 
-# In[22]:
+# In[5]:
 
 ### Pt 3 Exercise 3
 
@@ -458,22 +476,18 @@ def cdf(x, pdf):
         c[i]=np.trapz(pdf[:i],x[:i])
     return c
 
-dx = 10
-x = np.linspace(-2,15,17*dx)
-a = np.exp(-1)
-h0 = expon.pdf(x,0,1/a)
-h0 = h0[dx:-dx]
-h1 = x*expon.pdf(x,0,1/a)*a
-h1 = h1[0:-2*dx]
-x = np.linspace(0,15,15*dx)
+dx = 100
+x = np.linspace(0,10,10*dx+1)
+h0 = expon.pdf(x,1)
+h1 = (x-2)*expon.pdf(x,2)
 
-pm = 1 - cdf(x,h0)
-pf = cdf(x,h1)
-perr = pm+pf
+pm = 1 - expon.cdf(x,1)
+pf = (1-(x-1)*np.exp(2-x))*(np.sign(x-2)+1)/2
+perr = pm/2+pf/2
 
 amin = np.argmin(perr)
 tau = x[amin]
-print(f'Tau: {tau:2.3}\nPerr: {perr[amin]:2.3}')
+print(f'Tau: {tau:2.3}\nPerr: {perr[amin]:2.3}\nPm: {pm[amin]:2.3}\nPf: {pf[amin]:2.3}')
 
 plt.title('$H_0$ and $H_1$')
 plt.plot(x,h0,label='$H_0$')
@@ -481,7 +495,7 @@ plt.plot(x,h1,label='$H_1$')
 plt.plot([tau,tau],[0,h1[amin]],'k:')
 plt.fill_between(x[amin:],0,h0[amin:],alpha=0.3,color='C0',label='$P_m$')
 plt.fill_between(x[:amin],0,h1[:amin],alpha=0.3,color='C1',label='$P_f$')
-plt.xlim([0,15])
+plt.xlim([0,10])
 plt.grid(True)
 plt.legend()
 plt.xlabel('$x$')
@@ -494,7 +508,7 @@ plt.plot(x,pf,label='$P_f$')
 plt.plot([tau],[pm[amin]],'C0o')
 plt.plot([tau],[pf[amin]],'C1o')
 plt.title('$P_m$ and $P_f$')
-plt.xlim([0,15])
+plt.xlim([0,10])
 plt.grid(True)
 plt.xlabel(r'$\tau$')
 plt.ylabel('$P_m/P_f$')
@@ -506,7 +520,7 @@ plt.figure()
 plt.plot(x,perr,label='$P_{err}$')
 plt.plot([tau],[perr[amin]],'C0o')
 plt.title('$P_{err}$')
-plt.xlim([0,15])
+plt.xlim([0,10])
 plt.grid(True)
 plt.xlabel(r'$\tau$')
 plt.ylabel('$P_{err}$')
@@ -516,7 +530,7 @@ plt.savefig("ms_tp3_e6_perr.png",bbox_inches='tight')
 plt.show()
 
 
-# In[30]:
+# In[194]:
 
 # Pt 3 Exercise 3
 
@@ -530,22 +544,30 @@ mpl.rcParams['font.size']=12                #10
 mpl.rcParams['savefig.dpi']=300             #72 
 mpl.rcParams['figure.subplot.bottom']=.1    #.125
 
+
 def X(p):
     k = np.random.random()
     return 1 if k<p else 0
+
 def expn():
-    return expon.rvs(1,1/np.exp(-1))
+    return expon.rvs(1)
+
 N = 100000
-p = 0.3
+p = 0.5
+tau = 2.38
 r = np.zeros([N,1])
 x0 = []
 x1 = []
 x0o=[]
 x1o=[]
+error = 0
 for i in range(0,N):
     w = expn()
     v = expn()
     x = X(p)
+    k = x*v+w
+    if (k<=tau and x!=0) or (x==0 and k>tau):
+        error+=1
     r[i]= x*v+w
     if x==0:
         if (w<0):
@@ -555,33 +577,29 @@ for i in range(0,N):
     else:
         x1o.append(x)
         x1.append(x*v+w)
-b= np.linspace(0,15,61)
+print(f"error: {error/N}")
+b= np.linspace(0,10,41)
 # h0,b0 = np.histogram(x0,bins=b,normed=True)
 # h1,b1 = np.histogram(x1,bins=b,normed=True)
 b= b[:-1]
-scale = 1/np.exp(-1)
-y = expon.pdf(b,1,scale)
-print(f'H0 Integral: {np.sum(h0)}')
-print(f'H1 Integral: {np.sum(h1)}')
+y = expon.pdf(b,1)
+# print(f'H0 Integral: {np.sum(h0)}')
+# print(f'H1 Integral: {np.sum(h1)}')
 print(f'y Integral: {np.sum(y)}')
 plt.hist(x0,bins=b,alpha=0.5,normed=True,label='$H_0$')
 plt.hist(x1,bins=b,alpha=0.5,normed=True,label='$H_1$')
-h = np.linspace(-2,17,19*4+1)
-y = expon.pdf(h,0,1/np.exp(-1))
-z = expon.cdf(h,1,1/np.exp(-1)) #/(np.sqrt(np.exp(-1))))
-plt.plot(h+2,y*h*np.exp(-1),label='Teoretical $H_1$')
-plt.plot(h+1,y, label='Teoretical $H_0$')
+h = np.linspace(0,10,10*100)
+y = expon.pdf(h,1)
+z = expon.cdf(h,1) #/(np.sqrt(np.exp(-1))))
+plt.plot(h,y, label='Teoretical $H_0$')
+plt.plot(h,expon.pdf(h,2)*(h-2),label='Teoretical $H_1$')
 plt.xlim([0,np.max(b)])
 plt.xlabel('$x$')
 plt.ylabel('$p(x)$')
 plt.grid(True)
 plt.legend()
+plt.title("Simulation")
 plt.savefig("ms_tp3_e6_sim.png",bbox_inches='tight')
 
 plt.show()
-
-
-# In[ ]:
-
-
 
